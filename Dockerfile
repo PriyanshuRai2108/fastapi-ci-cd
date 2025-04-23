@@ -1,25 +1,26 @@
-# Start from an Ubuntu base image
-FROM ubuntu:latest
+# Use Ubuntu as the base image
+FROM ubuntu:20.04
 
-# Set working directory inside the container
+# Avoid interactive prompts during installation
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install Python and pip
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip && \
+    rm -rf /var/lib/apt/lists/*
+
+# Set the working directory in the container
 WORKDIR /app
 
-# Install required system dependencies
-RUN apt update && apt install -y python3 python3-pip python3-venv
-
-# Create a virtual environment
-RUN python3 -m venv /venv
-
-# Activate the virtual environment and install Python dependencies
-RUN /venv/bin/pip install --upgrade pip
+# Copy the requirements file and install dependencies
 COPY requirements.txt .
-RUN /venv/bin/pip install -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
-# Set the virtual environment as the default for Python and pip commands
-ENV PATH="/venv/bin:$PATH"
+# Copy the rest of the application code
+COPY main.py .
 
-# Copy the rest of your application code
-COPY . .
+# Expose the port on which the app will run
+EXPOSE 8000
 
-# Command to run your FastAPI app
+# Run the application using uvicorn
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
